@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-1. Ubuntu PC (16.04 or later) with NVIDIA GPU (1080 or 2080).
+1. Ubuntu PC (16.04 or later) with NVIDIA GPU (1080 or newer).
 2. Install NVIDIA drivers:
 	```bash
 	sudo add-apt-repository ppa:graphics-drivers/ppa
@@ -34,9 +34,9 @@
 ## Usage
 
 ### Cloning the repository
-Since there is submodule in the repository, please use the following when cloning the repository:
+Use the following when cloning the repository:
 ```
-git clone --recursive https://github.com/CSI-EU/hit-per.git
+git clone --recursive https://github.com/holmech-dev/docker-kinetic.git
 ```
 
 ### Building the Docker Image
