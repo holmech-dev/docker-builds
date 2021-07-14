@@ -1,0 +1,203 @@
+FROM holmech:kinetic-cuda
+
+###################################################################################
+### install python packages
+###################################################################################
+
+# NB: we install SIMD-optimized version of Pillow. has to be last as otherwise some other pkg may pull Pillow
+# NB: dont install pip version of pypcd -- it does not work with python3. we use local version
+
+
+COPY copy_files/tensorflow-1.13.2-cp36-cp36m-linux_x86_64.whl /root/tensorflow-1.13.2-cp36-cp36m-linux_x86_64.whl
+
+
+RUN PIP_INSTALL="/usr/local/bin/python3 -m pip --no-cache-dir install --upgrade" \
+    && \
+    $PIP_INSTALL \
+        setuptools \
+        catkin_pkg \
+        catkin_tools \
+        rospkg \
+        trollius \
+        yappi \
+        && \
+    $PIP_INSTALL \
+        numpy==1.16.4 \
+        numpy_indexed \
+        scipy \
+        pandas \
+        scikit-learn \
+        scikit-image \
+        matplotlib \
+        Cython \
+        Pillow==6.2.2 \
+        && \
+    $PIP_INSTALL -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-16.04 wxPython \
+        && \
+    $PIP_INSTALL /root/tensorflow-1.13.2-cp36-cp36m-linux_x86_64.whl \
+        && \
+    $PIP_INSTALL \
+        h5py \
+        keras==2.1.2 \
+        pydot \
+        graphviz \
+        tqdm \
+        python-lzf \
+        nuscenes-devkit \
+        docker-py --ignore-installed PyYAML \
+        && \
+    $PIP_INSTALL \
+        torch==1.2.0 torchvision==0.4.0 -f https://download.pytorch.org/whl/cu100/torch_stable.html \
+    && \
+    $PIP_INSTALL \
+        onnx \
+        onnxruntime-gpu \
+    && \
+    rm -f /root/tensorflow-1.13.2-cp36-cp36m-linux_x86_64.whl && \
+    /usr/local/bin/python3 -m pip uninstall -y Pillow && \
+    CC="cc -mavx2" /usr/local/bin/python3 -m pip install --force-reinstall pillow-simd==6.0.0.post0
+###################################################################################
+
+
+# this file was built in ubuntu16 docker with cudnn7(standard) and pytorch 1.2
+# this is a custom 3D sparse convolution for pytorch used in SECOND and PointPillars models
+COPY copy_files/spconv-1.1-cp36-cp36m-linux_x86_64.whl /root/
+RUN pip install /root/spconv-1.1-cp36-cp36m-linux_x86_64.whl && rm -rf /root/spconv-1.1-cp36-cp36m-linux_x86_64.whl
+RUN pip install numba fire tensorboardX protobuf scikit-image seaborn psutil nuscenes-devkit==1.0.1
+
+
+# install NVIDIA apex for pytorch for mixed precision and distributed training
+RUN cd /tmp \
+    && \
+    git clone https://github.com/NVIDIA/apex \
+    && \
+    cd apex && git checkout b5a7c5f972bc644804408dd96d7cb515df3af07b \
+    && \
+    pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./ \
+    && \
+    rm -rf /tmp/apex
+
+# temp hack as pillow v7 was released and is pulled by something above, but pillow-simd has not been released yet
+RUN /usr/local/bin/python3 -m pip uninstall -y Pillow && \
+    CC="cc -mavx2" /usr/local/bin/python3 -m pip install --force-reinstall pillow-simd==6.0.0.post0
+
+
+
+# Get newest version of Eigen (master) for slice functionality and latest performance updates
+RUN cd /opt \
+    && git clone https://gitlab.com/libeigen/eigen.git \
+    && cd /opt/eigen && mkdir build && cd build \
+    && cmake .. && make -j2 && make install
+
+RUN apt update && \
+    apt-get install -y protobuf-compiler libprotoc-dev && \
+    cd /tmp && \
+    git clone https://github.com/onnx/onnx.git && \
+    cd onnx && \
+    git submodule update --init --recursive && \
+    python3 setup.py install && \
+    cd .. && \
+    rm -rf onnx && \
+    rm -rf /var/lib/apt/lists/* 
+
+
+# reduntant - already available in workspace
+RUN rm -rf /opt/ros/kinetic/lib/python2.7/dist-packages/message_filters
+
+
+# PCL - build from source and install (with fix [Eucliean Clustering] Illegal memory access bug - cherry pick fix commit)
+RUN cd /opt \
+   && git clone https://github.com/PointCloudLibrary/pcl.git \
+   && cd /opt/pcl && git checkout pcl-1.9.0 \ 
+   && mkdir build && cd build \
+   && cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_CUDA=ON -DBUILD_GPU=ON \
+        -DBUILD_apps=ON \
+        -DBUILD_examples=ON \
+        -DBUILD_global_tests=ON .. \
+   && cd /opt/pcl/build && make -j2 \
+   && cd /opt/pcl/build && make install \
+   && rm -rf /var/lib/apt/lists/* 
+
+
+# OR-Tools https://developers.google.com/optimization/install/cpp
+RUN cd /opt \
+    && wget https://github.com/google/or-tools/releases/download/v7.6/or-tools_ubuntu-16.04_v7.6.7691.tar.gz \
+    && tar -xzf or-tools_ubuntu-16.04_v7.6.7691.tar.gz \
+    && rm -rf or-tools_ubuntu-16.04_v7.6.7691.tar.gz \
+    && mv or-tools_Ubuntu-16.04-64bit_v7.6.7691 ortools \
+    && cd ortools \
+    && make test_cc \
+    && rm -rf /var/lib/apt/lists/* 
+
+RUN  cd /opt && git clone https://github.com/stevenlovegrove/Pangolin.git \
+&& cd Pangolin && mkdir build && cd build && cmake  .. \
+&& make -j4 && make install 
+
+# install rqt_graph 
+RUN apt update && apt-get install -y ros-kinetic-cv-bridge
+RUN apt update && apt-get install -y ros-kinetic-rqt-graph && rm -rf /var/lib/apt/lists/* 
+
+
+#####################################################################################
+#### build OpenCV 3.4.6 with CUDA support. and make it default for our ROS workspace and python3
+## based on: https://www.pyimagesearch.com/2016/07/11/compiling-opencv-with-cuda-support/
+## the sources downloaded here: https://github.com/opencv/opencv_contrib/releases/tag/3.4.6
+## this may also be helpful: http://answers.ros.org/question/262683/how-to-use-gpu-enabled-opencv-with-ros-kinetic/
+
+#NB. for now do not build CUDA as we dont use it. when we come to use it - change WITH_CUDA
+#####################################################################################
+
+
+RUN mkdir /root/opencv
+COPY copy_files/opencv-3.4.6.zip /root/opencv
+COPY copy_files/opencv_contrib-3.4.6.zip /root/opencv
+
+RUN apt update \
+    && \
+    apt-get install -y \
+              libjpeg8-dev \
+              libtiff5-dev \
+              libjasper-dev \
+              libpng12-dev \
+              libgtk2.0-dev \
+              libavcodec-dev \
+              libavformat-dev \
+              libswscale-dev \
+              libv4l-dev \
+              libatlas-base-dev \
+              gfortran \
+              libhdf5-serial-dev \
+    && \
+    cd /root/opencv \
+    && \
+    unzip opencv-3.4.6.zip \ 
+    && \
+    unzip opencv_contrib-3.4.6.zip \
+    && \
+    mkdir /root/opencv/opencv-3.4.6/build \
+    && \
+    cd /root/opencv/opencv-3.4.6/build \
+    && \
+    cmake -D CMAKE_BUILD_TYPE=RELEASE \
+          -D CMAKE_INSTALL_PREFIX=/usr/local \
+          -D WITH_CUDA=ON \
+          -D ENABLE_FAST_MATH=1 \
+          -D CUDA_FAST_MATH=1 \
+          -D WITH_CUBLAS=1 \
+          -D CUDA_ARCH_BIN="5.0 5.2 6.1 7.5" \
+          -D INSTALL_PYTHON_EXAMPLES=OFF \
+          -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib-3.4.6/modules \
+          -D BUILD_EXAMPLES=ON ..  \
+          -D OPENCV_ENABLE_NONFREE=ON .. \
+    && \
+    make -j"$(nproc)" \
+    && \
+    make install \
+    && \
+    ldconfig \
+    && \
+    rm -rf /root/opencv \
+    && \
+    rm -rf /var/lib/apt/lists/* 

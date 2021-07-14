@@ -1,0 +1,267 @@
+FROM ros:kinetic
+
+# disable interactive configuration mode
+ENV DEBIAN_FRONTEND noninteractive
+
+
+###########################################################################################################
+# Intall some basic GUI and sound libs
+###########################################################################################################
+RUN apt-get update \
+    && \
+    apt-get install -y \
+        build-essential \
+        ca-certificates \
+        cmake-qt-gui \
+        dbus-x11 \
+        dmz-cursor-theme \
+        file \
+        fonts-dejavu \
+        fonts-liberation \
+        git \
+        gnome-terminal \
+        hicolor-icon-theme \
+        language-pack-en \
+        libasound2 \
+        libcanberra-gtk3-0 \
+        libcanberra-gtk-module \
+        libcanberra-gtk3-module \
+        libcurl4-gnutls-dev \
+        libdbus-glib-1-2 \
+        libexif12 \
+        libgl1-mesa-glx \
+        libgl1-mesa-dri \
+        libgtk2.0-0 \
+        libxt6 \
+        locales \
+        nano \
+        pulseaudio \
+        software-properties-common \
+        sudo \
+        tar \
+        unzip \
+        vim \
+        wget \
+        xz-utils \
+        zlib1g-dev \
+    && \
+    rm -rf /var/lib/apt/lists/* \
+    && \
+    update-locale LANG=en_US.UTF-8 LC_MESSAGES=POSIX
+###########################################################################################################
+
+
+# setup environment
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+RUN update-locale LANG=en_US.UTF-8 LC_MESSAGES=POSIX
+ENV PULSE_SERVER /run/pulse/native
+
+
+###########################################################################################################
+# CMAKE (install latest cmake version)
+###########################################################################################################
+#RUN add-apt-repository -y ppa:george-edison55/cmake-3.x
+#RUN apt-get update
+#RUN apt-get install --no-install-recommends -y cmake
+#RUN apt purge --auto-remove cmake -y
+
+# build from source rather than get from repo
+RUN cd /tmp \
+    && \
+    wget https://github.com/Kitware/CMake/releases/download/v3.15.2/cmake-3.15.2.tar.gz \
+    && \
+    tar -xzvf cmake-3.15.2.tar.gz \
+    && \
+    cd cmake-3.15.2/ \
+    && \
+    ./bootstrap --system-curl \
+    && \
+    make -j"$(nproc)" \
+    && \
+    make install \
+    && \
+    cd /tmp \
+    && \
+    rm -rf cmake-3.15.2.tar.gz cmake-3.15.2/
+###########################################################################################################
+
+
+##########################################################################################################
+# install Python 3.6
+##########################################################################################################
+
+#RUN apt purge -y python3 python3.5 python3-minimal python3.5-minimal \
+
+RUN add-apt-repository ppa:deadsnakes/ppa \
+    && \
+    apt-get update \
+    && \
+    apt-get install -y --no-install-recommends \
+        python3.6 \
+        python3.6-dev \
+        python3.6-tk \
+    && \
+    rm -rf /var/lib/apt/lists/*
+
+# why: /usr/local/bin is coming first in default /etc/environment, so making python3 link here we can
+# overwrite default ubuntu16 python3.5 with 3.6 version
+RUN ln -s /usr/bin/python3.6 /usr/local/bin/python3
+
+# now install pip for python3. the default pip on ubuntu14 is /usr/bin/pip2
+# also downgrade to 19.3 to be slightly behind and not be affected by latest development
+RUN wget -O ~/get-pip.py https://bootstrap.pypa.io/get-pip.py \
+    && \
+    python3 ~/get-pip.py \
+    && \
+    pip3 install --upgrade pip==19.3.1
+
+##########################################################################################################
+
+
+
+#
+# Install tools and libraries required by Autoware
+#
+RUN apt-get update && apt-get install -y \
+        cmake-curses-gui \
+        cmake-qt-gui \
+        dbus-x11 \
+        dmz-cursor-theme \
+        fonts-dejavu \
+        gconf2 \
+        gnome-terminal \
+        gstreamer0.10-plugins-good \
+        language-pack-en \
+        libarmadillo-dev \
+        libcanberra-gtk-module \
+        libcanberra-gtk3-0 \
+        libcanberra-gtk3-module \
+        libdbus-glib-1-2 \
+        libgflags-dev \
+        libglew-dev \
+        libgoogle-glog-dev \
+        libgoogle-perftools-dev \
+        libgsl0-dev \
+        libmosquitto-dev \
+        libopencv-dev \
+        libopenni2-dev \
+        libpcap-dev \
+        libssh2-1-dev \
+        locales \
+        pulseaudio \
+        python-flask \
+        python-requests \
+        python3-colcon-common-extensions \
+        python3-pip \
+        python3-setuptools \
+        sudo \
+        tmux \
+        v4l-utils \
+        vim \
+        wget && \
+        rm -rf /var/lib/apt/lists/*
+
+
+# install ROS desktop full and extra packages
+# ditch kinetic opencv. we'll build it from source below.
+# NB: this will purge lots of ROS packages dependent on ros...opencv apt package, this is fine
+# whatever we need that depends on opencv will be in our workspace built from source anyway
+RUN apt-get update && \
+    apt-get install -y \
+                ros-kinetic-desktop-full \
+                ros-kinetic-velodyne \
+                ros-kinetic-velodyne-pointcloud \
+                ros-kinetic-driver-base \
+                ros-kinetic-camera1394 \
+                qtbase5-dev \
+                libbullet-dev && \
+    apt purge -y ros-kinetic-opencv3 && \
+    apt-get install -y ros-kinetic-rviz \
+                       ros-kinetic-cmake-modules \
+                       ros-kinetic-roslint \
+                       ros-kinetic-stereo-msgs \
+                       ros-kinetic-robot-state-publisher \
+                       ros-kinetic-robot-localization \
+                       ros-kinetic-rosbash \
+                       ros-kinetic-geodesy \
+                       ros-kinetic-pcl-ros \
+                       ros-kinetic-nmea-msgs \
+                       ros-kinetic-tf-conversions \
+                       ros-kinetic-libg2o && \
+    apt-get clean -y && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
+
+
+# install bootstrap tools
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y \
+      python-rosdep \
+      python-rosinstall \
+      python-vcstools \
+      python-pip && \
+    rm -rf /var/lib/apt/lists/*
+
+
+
+# bootstrap rosdep
+#RUN rosdep init && \
+#    rosdep update
+RUN rosdep update
+
+
+
+
+
+##########################################################################################################
+# Intall NTP for Synch
+##########################################################################################################
+#used to be on ubuntu14: RUN apt-get install ntp 4.2.6 -y
+RUN apt update \
+    && \
+    apt-get install ntp -y \
+    && \
+    rm -rf /var/lib/apt/lists/*
+##########################################################################################################
+
+
+#########################################################################################################
+# CANLIB
+#########################################################################################################
+RUN cd /var/lib \
+    && \
+    wget --content-disposition "https://www.kvaser.com/downloads-kvaser/?utm_source=software&utm_ean=7330130980754&utm_status=latest" \
+    && \
+    tar xf linuxcan.tar.gz \
+    && \
+    cd "linuxcan/canlib" \
+    && \
+    make -j"$(nproc)" \
+    && \
+    make install \
+    && \
+    ldconfig \
+    && \
+    apt-get clean -y \
+    && \
+    apt-get autoremove -y \
+    && \
+    rm -rf /var/lib/apt/lists/* /tmp/* ~/*
+#########################################################################################################
+
+
+##########################################################################################################
+# enable bash command prompt history search
+COPY copy_files/.inputrc /root/.inputrc
+##########################################################################################################
+
+
+##########################################################################################################
+# REPLACE PYTHON2 to PYTHON3 as default system python
+##########################################################################################################
+
+# ok, if we do not use vitualenv then the only way to make catkin use python3 is to do the following
+RUN ln -s /usr/bin/python3.6 /usr/local/bin/python
+
+##########################################################################################################
