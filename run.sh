@@ -16,7 +16,7 @@ nvidia-docker run -it --rm\
     --volume="$ROS_DATA_DIR:/ROS_DATA_DIR:rw"\
     --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
     --volume="$HOME:/home/chris:rw" \
-    --workdir="/home/chris/_holmech-dev" \
+    --workdir="/home/chris/_holmech-dev/docker-kinetic/services" \
     --name="focal-cuda-test_0" \
     --privileged=True \
     holmech:focal-cuda-base

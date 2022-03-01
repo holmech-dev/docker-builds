@@ -33,6 +33,7 @@ RUN mkdir -p $CARLA_ROOT
 
 RUN apt update && apt install -y \
     python3-pip && \
+    libomp && \
     rm -rf /var/lib/apt/lists/*
 RUN apt update && apt install -y curl
 RUN curl -o $CARLA_ROOT/CARLA_0.9.12.tar.gz -SL "https://carla-releases.s3.eu-west-3.amazonaws.com/Linux/CARLA_0.9.12.tar.gz"
