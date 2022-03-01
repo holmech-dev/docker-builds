@@ -7,10 +7,39 @@ FROM nvidia/cuda:11.6.0-base-ubuntu20.04 as base
 ###########################################################################################################
 # Intall some basic GUI and sound libs
 ###########################################################################################################
+ENV TZ=Europe/London
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt-get update \
     && \
     apt-get install -y \
         build-essential \
+        software-properties-common \
     && \
-    rm -rf /var/lib/apt/lists/* \
+    rm -rf /var/lib/apt/lists/*
+###########################################################################################################
+
+
+###########################################################################################################
+# Carla
+###########################################################################################################
+ENV CARLA_ROOT /opt/carla-simulator
+RUN mkdir -p $CARLA_ROOT
+
+#ENV TZ=Europe/London
+#RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+#RUN apt update
+#RUN apt install -y tzdata
+
+RUN apt update && apt install -y \
+    python3-pip && \
+    rm -rf /var/lib/apt/lists/*
+RUN apt update && apt install -y curl
+RUN curl -o $CARLA_ROOT/CARLA_0.9.12.tar.gz -SL "https://carla-releases.s3.eu-west-3.amazonaws.com/Linux/CARLA_0.9.12.tar.gz"
+RUN tar -zxf $CARLA_ROOT/CARLA_0.9.12.tar.gz -C $CARLA_ROOT && rm $CARLA_ROOT/CARLA_0.9.12.tar.gz
+
+RUN curl -o $CARLA_ROOT/Import/AdditionalMaps_0.9.12.tar.gz -SL "https://carla-releases.s3.eu-west-3.amazonaws.com/Linux/AdditionalMaps_0.9.12.tar.gz"
+RUN cd $CARLA_ROOT && ./ImportAssets.sh
+
+
 ###########################################################################################################
