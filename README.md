@@ -1,4 +1,4 @@
-# Docker Build for ROS Kinetic
+# Docker Build for ROS Kinetic with Carla (Cranfield Test Track Environment)
 
 ## Prerequisites
 
@@ -41,13 +41,13 @@ git clone --recursive https://github.com/holmech-dev/docker-builds.git
 
 ### Building the Docker Image
 ```bash
-cd ~/nissan/holmech-dev/docker-builds/docker-kinetic
+cd ~/nissan/holmech-dev/docker-builds/docker
 ./build.sh
 ```
 
 ### Running a container
 ```bash
-cd ~/nissan/holmech-dev/docker-builds/docker-kinetic
+cd ~/nissan/holmech-dev/docker-builds/docker
 ./run.sh
 ```
 To instantiate another session of a container already running
