@@ -1,0 +1,1 @@
+SDL_VIDEODRIVER=offscreen ${SMLL_DIR}/LinuxNoEditor/CarlaUE4.sh -opengl
