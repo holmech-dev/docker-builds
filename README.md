@@ -36,18 +36,18 @@
 ### Cloning the repository
 Use the following when cloning the repository:
 ```
-git clone --recursive https://github.com/holmech-dev/docker-kinetic.git
+git clone --recursive https://github.com/holmech-dev/docker-builds.git
 ```
 
 ### Building the Docker Image
 ```bash
-cd ~/chris/holmech-dev/docker-builds/docker-kinetic
+cd ~/nissan/holmech-dev/docker-builds/docker-kinetic
 ./build.sh
 ```
 
 ### Running a container
 ```bash
-cd ~/chris/holmech-dev/docker-builds/docker-kinetic
+cd ~/nissan/holmech-dev/docker-builds/docker-kinetic
 ./run.sh
 ```
 To instantiate another session of a container already running
