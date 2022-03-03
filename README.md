@@ -39,7 +39,15 @@ Use the following when cloning the repository:
 git clone --recursive https://github.com/holmech-dev/docker-builds.git
 ```
 
-### Building the Docker Image
+### OPTION 1: With Docker Hub account
+The docker image can be pulled from docker hub. It requires login access to the project image.
+```bash
+cd ~/nissan/holmech-dev/docker-builds/docker
+docker login
+docker pull servcity2020/had_sim:latest
+```
+
+### Option2: Building the Docker Image (without Docker Hub account)
 ```bash
 cd ~/nissan/holmech-dev/docker-builds/docker
 ./build.sh
@@ -50,7 +58,33 @@ cd ~/nissan/holmech-dev/docker-builds/docker
 cd ~/nissan/holmech-dev/docker-builds/docker
 ./run.sh
 ```
+
 To instantiate another session of a container already running
 ```bash
 ./exec.sh
 ```
+
+### Running a Carla session
+Option 1 - The Cranfield Test Track - Setup of the environment for 
+```bash
+cd ~/nissan/holmech-dev/docker-builds/services
+./setup_test_track.sh
+```
+
+Start a session
+```bash
+cd ~/nissan/holmech-dev/docker-builds/services
+./startup_carla_test_track.sh
+```
+
+Option 2 - Boxfresh Carla
+```bash
+cd ~/nissan/holmech-dev/docker-builds/services
+./startup_carla.sh
+```
+
+-----------------------------------------------------------------------------------------------------------
+
+## Additional Files
+
+carla-LHT-Hack_03_03_22.zip
