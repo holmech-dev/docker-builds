@@ -44,6 +44,10 @@ RUN apt-get update \
         wget \
         xz-utils \
         zlib1g-dev \
+        libace* \
+        ogre* \
+        libcgal* \
+        protobuf-compiler \
     && \
     rm -rf /var/lib/apt/lists/* \
     && \
@@ -93,29 +97,37 @@ RUN cd /tmp \
 
 #RUN apt purge -y python3 python3.5 python3-minimal python3.5-minimal \
 
-RUN add-apt-repository ppa:deadsnakes/ppa \
-    && \
-    apt-get update \
-    && \
-    apt-get install -y --no-install-recommends \
-        python3.6 \
-        python3.6-dev \
-        python3.6-tk \
-    && \
-    rm -rf /var/lib/apt/lists/*
+#RUN add-apt-repository ppa:deadsnakes/ppa \
+#    && \
+#    apt-get update \
+#    && \
+#    apt-get install -y --no-install-recommends \
+#        python3.6 \
+#        python3.6-dev \
+#        python3.6-tk \
+#    && \
+#    rm -rf /var/lib/apt/lists/*
+
+# Set python3.7 as the default python
+RUN apt-get install python3
 
 # why: /usr/local/bin is coming first in default /etc/environment, so making python3 link here we can
 # overwrite default ubuntu16 python3.5 with 3.6 version
-RUN ln -s /usr/bin/python3.6 /usr/local/bin/python3
+RUN ln -s /usr/bin/python3 /usr/local/bin/python3
 
 # now install pip for python3. the default pip on ubuntu14 is /usr/bin/pip2
 # also downgrade to 19.3 to be slightly behind and not be affected by latest development
-RUN wget -O ~/get-pip.py https://bootstrap.pypa.io/get-pip.py \
-    && \
-    python3 ~/get-pip.py \
-    && \
-    pip3 install --upgrade pip==19.3.1
+#RUN wget -O ~/get-pip.py https://bootstrap.pypa.io/get-pip.py \
+#    && \
+#    python3 ~/get-pip.py \
+#    && \
+#    pip3 install --upgrade pip==19.3.1
 
+RUN apt-get update && apt-get install -y \
+    python3-pip
+
+RUN pip3 install --upgrade setuptools
+RUN apt-get install python3-numpy
 ##########################################################################################################
 
 
@@ -145,6 +157,7 @@ RUN apt-get update && apt-get install -y \
         libgsl0-dev \
         libmosquitto-dev \
         libopencv-dev \
+        libopencv-core-dev \
         libopenni2-dev \
         libpcap-dev \
         libssh2-1-dev \
@@ -155,9 +168,14 @@ RUN apt-get update && apt-get install -y \
         python3-colcon-common-extensions \
         python3-pip \
         python3-setuptools \
+        libncurses5-dev \
+        libglademm-2.4-1v5 \
+        libglade2-0 \
+        libv4l-dev \
         sudo \
         tmux \
         v4l-utils \
+        liborocos-kdl-dev \
         vim \
         wget && \
         rm -rf /var/lib/apt/lists/*
@@ -170,13 +188,15 @@ RUN apt-get update && apt-get install -y \
 RUN apt-get update && \
     apt-get install -y \
                 ros-kinetic-desktop-full \
+                ros-kinetic-rosdoc-lite \
                 ros-kinetic-velodyne \
                 ros-kinetic-velodyne-pointcloud \
                 ros-kinetic-driver-base \
                 ros-kinetic-camera1394 \
+                ros-kinetic-cv-bridge \
                 qtbase5-dev \
                 libbullet-dev && \
-    apt purge -y ros-kinetic-opencv3 && \
+    #apt remove -y ros-kinetic-opencv3 && \
     apt-get install -y ros-kinetic-rviz \
                        ros-kinetic-cmake-modules \
                        ros-kinetic-roslint \
@@ -199,6 +219,8 @@ RUN apt-get update && \
     apt-get install --no-install-recommends -y \
       python-rosdep \
       python-rosinstall \
+      python-rosinstall-generator \
+      python-wstool \
       python-vcstools \
       python-pip && \
     rm -rf /var/lib/apt/lists/*
@@ -225,6 +247,8 @@ RUN apt update \
     rm -rf /var/lib/apt/lists/*
 ##########################################################################################################
 
+RUN cd /usr/include
+RUN sudo ln -s libxml2/libxml libxml
 
 #########################################################################################################
 # CANLIB

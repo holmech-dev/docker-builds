@@ -1,3 +1,3 @@
 #!/bin/bash
 xhost +
-docker exec -it Kinetic-latest-test_0 $SHELL
+docker exec -it Kinetic-cuda-test_0 $SHELL

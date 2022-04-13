@@ -7,6 +7,8 @@ xhost +
 # find current directory
 #swd="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
+#holmech:kinetic-latest
+
 nvidia-docker run -it --rm\
     --net=host \
     --env="DISPLAY" \
@@ -16,7 +18,7 @@ nvidia-docker run -it --rm\
     --volume="$ROS_DATA_DIR:/ROS_DATA_DIR:rw"\
     --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
     --volume="$HOME:/home/chris:rw" \
-    --workdir="/home/chris/holmech-dev/pedestrian_interaction/Pedestrian-Interactions-ws" \
-    --name="Kinetic-latest-test_0" \
+    --workdir="/home/chris/_holmech-dev/pedestrian_interaction/Pedestrian-Interactions-ws" \
+    --name="Kinetic-cuda-test_0" \
     --privileged=True \
-    holmech:kinetic-latest
+    holmech:kinetic-cuda

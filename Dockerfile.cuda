@@ -113,3 +113,101 @@ RUN dpkg -i /root/nv-tensorrt-repo-ubuntu1604-cuda10.0-trt5.1.5.0-ga-20190427_1-
 #git clone --recursive https://github.com/onnx/onnx.git
 #cd onnx
 #TENSORRT_ROOT=/home/nissan/Downloads/TensorRT-5.0.2.6 python setup.py build
+
+###############################################################################################################
+### PCL Library
+###############################################################################################################
+# PCL - build from source and install (with fix [Eucliean Clustering] Illegal memory access bug - cherry pick fix commit)
+RUN cd /opt \
+   && git clone https://github.com/PointCloudLibrary/pcl.git \
+   && cd /opt/pcl && git checkout pcl-1.9.0 \ 
+   && mkdir build && cd build \
+   && cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_CUDA=ON -DBUILD_GPU=ON \
+        -DBUILD_apps=ON \
+        -DBUILD_examples=ON \
+        -DBUILD_global_tests=ON .. \
+   && cd /opt/pcl/build && make -j2 \
+   && cd /opt/pcl/build && make install \
+   && rm -rf /var/lib/apt/lists/* 
+
+###############################################################################################################
+### Opencv 4.4.0
+###############################################################################################################
+#libtbb2 \
+#libtbb2-dev \
+
+#RUN mkdir /root/opencv
+#COPY copy_files/opencv-4.4.0.zip /root/opencv
+#COPY copy_files/opencv_contrib-4.4.0.zip /root/opencv
+
+#RUN apt update \
+#    && \
+#    apt-get install -y \
+#              libjpeg-dev \
+#              libtiff-dev \
+#              libjasper-dev \
+#              libpng-dev \
+#              libgtk2.0-dev \
+#              libavcodec-dev \
+#              libavformat-dev \
+#              libswscale-dev \
+#              libv4l-dev \
+#              libatlas-base-dev \
+#              gfortran \
+#              libhdf5-serial-dev \
+#              pkg-config \
+#    && \
+#    cd /root/opencv \
+#    && \
+#    unzip opencv-4.4.0.zip \ 
+#    && \
+#    unzip opencv_contrib-4.4.0.zip \
+#    && \
+#    mkdir /root/opencv/opencv-4.4.0/build \
+#    && \
+#    cd /root/opencv/opencv-4.4.0/build \
+#    && \
+#    cmake -D CMAKE_BUILD_TYPE=RELEASE \
+#          -D CMAKE_INSTALL_PREFIX=/usr/local \
+#          -D WITH_CUDA=ON \
+#          -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib-4.4.0/modules \
+#          -D OPENCV_ENABLE_NONFREE=ON \
+#          -D BUILD_NEW_PYTHON_SUPPORT_ON=ON \
+#          -D BUILD_opencv_python3=ON \
+#          -D HAVE_opencv_python3=ON \
+#          -D PYTHON_DEFAULT_EXECUTABLE=/usr/bin/python3 .. \
+
+#    && \
+#    make -j"$(nproc)" \
+#    && \
+#    make install \
+#    && \
+#    ldconfig \
+#    && \
+#    rm -rf /root/opencv \
+#    && \
+#    rm -rf /var/lib/apt/lists/* 
+
+#RUN useradd -ms /bin/bash docker
+#USER docker
+
+###############################################################################################################
+### User Add, sudo cmds with no pw required
+###############################################################################################################
+#ARG USERNAME=holmech
+#ARG USER_UID=1000
+#ARG USER_GID=$USER_UID
+
+# Create the user
+#RUN groupadd --gid $USER_GID $USERNAME \
+#    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME 
+    #
+    # [Optional] Add sudo support. Omit if you don't need to install software after connecting.
+    #&& apt-get update \
+    #&& apt-get install -y sudo \
+    #&& echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    #&& chmod 0440 /etc/sudoers.d/$USERNAME
+
+#USER $USERNAME
