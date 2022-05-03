@@ -41,13 +41,13 @@ git clone --recursive https://github.com/holmech-dev/docker-builds.git
 
 ### Building the Docker Image
 ```bash
-cd ~/chris/holmech-dev/docker-builds/docker-kinetic
+cd ~/chris/holmech-dev/docker-builds
 ./build.sh
 ```
 
 ### Running a container
 ```bash
-cd ~/chris/holmech-dev/docker-builds/docker-kinetic
+cd ~/chris/holmech-dev/docker-builds
 ./run.sh
 ```
 To instantiate another session of a container already running
