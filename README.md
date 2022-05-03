@@ -36,7 +36,7 @@
 ### Cloning the repository
 Use the following when cloning the repository:
 ```
-git clone --recursive https://github.com/holmech-dev/docker-kinetic.git
+git clone --recursive https://github.com/holmech-dev/docker-builds.git
 ```
 
 ### Building the Docker Image
