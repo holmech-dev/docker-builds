@@ -3,6 +3,8 @@ copy_files/
 devel/
 logs/
 build/
+feature_*/
+h_a/
 
 # ignore all files with following extensions
 *.bag

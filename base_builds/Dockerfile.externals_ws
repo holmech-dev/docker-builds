@@ -1,0 +1,39 @@
+FROM holmec/noetic-base
+
+
+###########################################################################################################
+# Copy local source files and build in container
+###########################################################################################################
+#RUN mkdir -p /home/projects/externals_ws/src
+COPY copy_files/externals_ws.zip /home/projects
+    RUN cd /home/projects \
+        && \
+        unzip externals_ws.zip \
+        && \
+        cd externals_ws \
+        && \
+        rm -rf build devel \
+        && \
+       # https://answers.ros.org/question/370439/how-to-source-setupbash-in-a-ros2-dockerfile/
+        . /opt/ros/noetic/setup.sh \ 
+        && catkin_make
+
+###########################################################################################################
+
+#COPY copy_files/nrc_ws.zip /home/projects
+#    RUN cd /home/projects \
+#        && \
+#        unzip nrc_ws.zip \
+#        && \
+#        cd nrc_ws \
+#        && \
+#        rm -rf build devel \
+#        && \
+#        . /opt/ros/noetic/setup.sh \
+#        && \
+#        . /home/projects/externals_ws/devel/setup.sh \
+#        && \
+#        catkin_make --pkg nrc_msgs \
+#        && \
+#        catkin_make --pkg nrc --force-cmake \
+#        && catkin_make
