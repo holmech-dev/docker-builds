@@ -1,4 +1,4 @@
-FROM holmech:kinetic-cuda
+FROM holmec/kinetic-cuda
 
 ###################################################################################
 ### install python packages
@@ -8,7 +8,7 @@ FROM holmech:kinetic-cuda
 # NB: dont install pip version of pypcd -- it does not work with python3. we use local version
 
 
-COPY copy_files/tensorflow-1.13.2-cp36-cp36m-linux_x86_64.whl /root/tensorflow-1.13.2-cp36-cp36m-linux_x86_64.whl
+#COPY copy_files/tensorflow-1.13.2-cp36-cp36m-linux_x86_64.whl /root/tensorflow-1.13.2-cp36-cp36m-linux_x86_64.whl
 
 
 RUN PIP_INSTALL="/usr/local/bin/python3 -m pip --no-cache-dir install --upgrade" \
@@ -26,78 +26,78 @@ RUN PIP_INSTALL="/usr/local/bin/python3 -m pip --no-cache-dir install --upgrade"
         numpy_indexed \
         scipy \
         pandas \
-        scikit-learn \
-        scikit-image \
+        #scikit-learn \
+        #scikit-image \
         matplotlib \
-        Cython \
-        Pillow==6.2.2 \
+        #Cython \
+        #Pillow==6.2.2 \
         && \
-    $PIP_INSTALL -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-16.04 wxPython \
-        && \
-    $PIP_INSTALL /root/tensorflow-1.13.2-cp36-cp36m-linux_x86_64.whl \
-        && \
+    #$PIP_INSTALL -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-16.04 wxPython \
+    #    && \
+    #$PIP_INSTALL /root/tensorflow-1.13.2-cp36-cp36m-linux_x86_64.whl \
+    #    && \
     $PIP_INSTALL \
-        h5py \
-        keras==2.1.2 \
+        #h5py \
+        #keras==2.1.2 \
         pydot \
         graphviz \
         tqdm \
         python-lzf \
-        nuscenes-devkit \
-        docker-py --ignore-installed PyYAML \
-        && \
-    $PIP_INSTALL \
-        torch==1.2.0 torchvision==0.4.0 -f https://download.pytorch.org/whl/cu100/torch_stable.html \
-    && \
-    $PIP_INSTALL \
-        onnx \
-        onnxruntime-gpu \
-    && \
-    rm -f /root/tensorflow-1.13.2-cp36-cp36m-linux_x86_64.whl && \
-    /usr/local/bin/python3 -m pip uninstall -y Pillow && \
-    CC="cc -mavx2" /usr/local/bin/python3 -m pip install --force-reinstall pillow-simd==6.0.0.post0
+        #nuscenes-devkit \
+        docker-py --ignore-installed PyYAML
+        #&& \
+    #$PIP_INSTALL \
+    #    torch==1.2.0 torchvision==0.4.0 -f https://download.pytorch.org/whl/cu100/torch_stable.html \
+    #&& \
+    #$PIP_INSTALL \
+    #    onnx \
+    #    onnxruntime-gpu \
+    #&& \
+    #rm -f /root/tensorflow-1.13.2-cp36-cp36m-linux_x86_64.whl && \
+    #/usr/local/bin/python3 -m pip uninstall -y Pillow \
+    #CC="cc -mavx2" /usr/local/bin/python3 -m pip install --force-reinstall pillow-simd==6.0.0.post0
 ###################################################################################
 
 
 # this file was built in ubuntu16 docker with cudnn7(standard) and pytorch 1.2
 # this is a custom 3D sparse convolution for pytorch used in SECOND and PointPillars models
-COPY copy_files/spconv-1.1-cp36-cp36m-linux_x86_64.whl /root/
-RUN pip install /root/spconv-1.1-cp36-cp36m-linux_x86_64.whl && rm -rf /root/spconv-1.1-cp36-cp36m-linux_x86_64.whl
-RUN pip install numba fire tensorboardX protobuf scikit-image seaborn psutil nuscenes-devkit==1.0.1
+#COPY copy_files/spconv-1.1-cp36-cp36m-linux_x86_64.whl /root/
+#RUN pip install /root/spconv-1.1-cp36-cp36m-linux_x86_64.whl && rm -rf /root/spconv-1.1-cp36-cp36m-linux_x86_64.whl
+#RUN pip install numba fire tensorboardX protobuf scikit-image seaborn psutil nuscenes-devkit==1.0.1
 
 
 # install NVIDIA apex for pytorch for mixed precision and distributed training
-RUN cd /tmp \
-    && \
-    git clone https://github.com/NVIDIA/apex \
-    && \
-    cd apex && git checkout b5a7c5f972bc644804408dd96d7cb515df3af07b \
-    && \
-    pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./ \
-    && \
-    rm -rf /tmp/apex
+#RUN cd /tmp \
+#    && \
+#    git clone https://github.com/NVIDIA/apex \
+#    && \
+#    cd apex && git checkout b5a7c5f972bc644804408dd96d7cb515df3af07b \
+#    && \
+#    pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./ \
+#    && \
+#    rm -rf /tmp/apex
 
 # temp hack as pillow v7 was released and is pulled by something above, but pillow-simd has not been released yet
-RUN /usr/local/bin/python3 -m pip uninstall -y Pillow && \
-    CC="cc -mavx2" /usr/local/bin/python3 -m pip install --force-reinstall pillow-simd==6.0.0.post0
+#RUN /usr/local/bin/python3 -m pip uninstall -y Pillow && \
+#    CC="cc -mavx2" /usr/local/bin/python3 -m pip install --force-reinstall pillow-simd==6.0.0.post0
 
 
 
 # Get newest version of Eigen (master) for slice functionality and latest performance updates
 RUN cd /opt \
-    && git clone https://gitlab.com/libeigen/eigen.git \
+    && git clone -b 3.3 https://gitlab.com/libeigen/eigen.git \
     && cd /opt/eigen && mkdir build && cd build \
     && cmake .. && make -j2 && make install
 
 RUN apt update && \
     apt-get install -y protobuf-compiler libprotoc-dev && \
-    cd /tmp && \
-    git clone https://github.com/onnx/onnx.git && \
-    cd onnx && \
-    git submodule update --init --recursive && \
-    python3 setup.py install && \
-    cd .. && \
-    rm -rf onnx && \
+    #cd /tmp && \
+    #git clone https://github.com/onnx/onnx.git && \
+    #cd onnx && \
+    #git submodule update --init --recursive && \
+    #python3 setup.py install && \
+    #cd .. && \
+    #rm -rf onnx && \
     rm -rf /var/lib/apt/lists/* 
 
 
@@ -131,9 +131,9 @@ RUN cd /opt \
     && make test_cc \
     && rm -rf /var/lib/apt/lists/* 
 
-RUN  cd /opt && git clone https://github.com/stevenlovegrove/Pangolin.git \
-&& cd Pangolin && mkdir build && cd build && cmake  .. \
-&& make -j4 && make install 
+#RUN  cd /opt && git clone https://github.com/stevenlovegrove/Pangolin.git \
+#&& cd Pangolin && mkdir build && cd build && cmake  .. \
+#&& make -j4 && make install 
 
 # install rqt_graph 
 RUN apt update && apt-get install -y ros-kinetic-cv-bridge
@@ -201,3 +201,16 @@ RUN apt update \
     rm -rf /root/opencv \
     && \
     rm -rf /var/lib/apt/lists/* 
+
+    COPY copy_files/qwt-6.1.2.zip /root
+    RUN cd /root \
+        && \
+        unzip qwt-6.1.2.zip \
+        && \
+        cd qwt-6.1.2 \
+        && \
+        /usr/lib/x86_64-linux-gnu/qt5/bin/qmake qwt.pro \
+        && \
+        make \
+        && \
+        make install

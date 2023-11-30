@@ -98,19 +98,19 @@ RUN add-apt-repository ppa:deadsnakes/ppa \
     apt-get update \
     && \
     apt-get install -y --no-install-recommends \
-        python3.6 \
-        python3.6-dev \
-        python3.6-tk \
+        python3.5 \
+        python3.5-dev \
+        python3.5-tk \
     && \
     rm -rf /var/lib/apt/lists/*
 
 # why: /usr/local/bin is coming first in default /etc/environment, so making python3 link here we can
 # overwrite default ubuntu16 python3.5 with 3.6 version
-RUN ln -s /usr/bin/python3.6 /usr/local/bin/python3
+RUN ln -s /usr/bin/python3.5 /usr/local/bin/python3
 
 # now install pip for python3. the default pip on ubuntu14 is /usr/bin/pip2
 # also downgrade to 19.3 to be slightly behind and not be affected by latest development
-RUN wget -O ~/get-pip.py https://bootstrap.pypa.io/get-pip.py \
+RUN wget -O ~/get-pip.py https://bootstrap.pypa.io/pip/3.5/get-pip.py \
     && \
     python3 ~/get-pip.py \
     && \

@@ -1,8 +1,10 @@
+# ignore all directories with ("dir"/) name
 copy_files/
 devel/
 logs/
 build/
 
+# ignore all files with following extensions
 *.bag
 *.a
 *.so
